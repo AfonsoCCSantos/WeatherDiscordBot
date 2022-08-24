@@ -6,6 +6,7 @@
         {
             return name switch
             {
+                ("weather-in") => new WeatherInCommandHandler(),
                 _ => throw new ArgumentException($"No Command named {name}"),
             };
         }

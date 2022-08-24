@@ -7,21 +7,11 @@ using Newtonsoft.Json;
 using WeatherDiscordBot.CommandHandlers;
 using WeatherDiscordBot.Models;
 
-using IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((_, services) =>
-        services.AddHttpClient("GeocodingAPIClient", httpClient =>
-        {
-            httpClient.BaseAddress = new Uri("http://api.openweathermap.org/geo/1.0/direct?");
-            httpClient.DefaultRequestHeaders.Add(API_KEY_HEADER, Environment.GetEnvironmentVariable("APIKey"));
-        }))
-    .Build();
-
 namespace WeatherDiscordBot
 {
     public class Program
     {
         private DiscordSocketClient _discordClient;
-        private const string API_KEY_HEADER = "appid";
 
         public static Task Main(string[] args) => new Program().MainAsync();
 
@@ -30,6 +20,7 @@ namespace WeatherDiscordBot
             SetupDiscordClient();
             var token = Environment.GetEnvironmentVariable("TokenName");
             await InitDiscordClient(token);
+
             await Task.Delay(-1);
         }
 
@@ -55,7 +46,20 @@ namespace WeatherDiscordBot
 
         public async Task AddAllGlobalSlashCommands()
         {
-            
+            var cityParameter = CreateSlashCommandOptions("city", "The city of which we want the weather",
+                                                            ApplicationCommandOptionType.String);
+            await CreateGlobalSlashCommand(SetupGlobalSlashCommand(new SlashCommandModel("weather-in",
+                                                                   "Gives information about the weather in the given city",
+                                                                   cityParameter.Options)));
+
+        }
+
+        private static SlashCommandOptionBuilder CreateSlashCommandOptions(string name, string description,
+                                                                           ApplicationCommandOptionType type)
+        {
+            var userInfoOption = new SlashCommandOptionBuilder();
+            userInfoOption.AddOption(name, type, description, isRequired: true);
+            return userInfoOption;
         }
 
         private static SlashCommandBuilder SetupGlobalSlashCommand(SlashCommandModel commandModel)
