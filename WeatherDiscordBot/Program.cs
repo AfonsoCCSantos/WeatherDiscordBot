@@ -1,8 +1,6 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using WeatherDiscordBot.CommandHandlers;
 using WeatherDiscordBot.Models;
@@ -20,6 +18,10 @@ namespace WeatherDiscordBot
             SetupDiscordClient();
             var token = Environment.GetEnvironmentVariable("TokenName");
             await InitDiscordClient(token);
+
+            var httpClientHolder = new HttpClientHolder();
+            httpClientHolder.OpenWeatherClient.BaseAddress = new Uri("http://api.openweathermap.org/geo/1.0/direct?");
+            httpClientHolder.OpenWeatherClient.DefaultRequestHeaders.Add(Constants.API_KEY_HEADER, Environment.GetEnvironmentVariable("ApiKeyHeader");
 
             await Task.Delay(-1);
         }
@@ -102,6 +104,19 @@ namespace WeatherDiscordBot
         {
             await _discordClient.LoginAsync(TokenType.Bot, token);
             await _discordClient.StartAsync();
+        }
+
+        private void SetupHttpClients(HttpClientHolder httpClientHolder)
+        {
+            var apiKey = Environment.GetEnvironmentVariable("ApiKeyHeader");
+
+            httpClientHolder.OpenWeatherClient.BaseAddress = new Uri(Constants.OPENWEATHER_BASE_URL);
+            httpClientHolder.OpenWeatherClient.DefaultRequestHeaders
+                            .Add(Constants.API_KEY_HEADER, apiKey);
+
+            httpClientHolder.GeocodigClient.BaseAddress = new Uri(Constants.GEOCODING_BASE_URL);
+            httpClientHolder.GeocodigClient.DefaultRequestHeaders
+                            .Add(Constants.API_KEY_HEADER, apiKey);
         }
     }
 }
