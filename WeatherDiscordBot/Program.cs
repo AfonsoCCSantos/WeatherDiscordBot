@@ -20,8 +20,7 @@ namespace WeatherDiscordBot
             await InitDiscordClient(token);
 
             var httpClientHolder = new HttpClientHolder();
-            httpClientHolder.OpenWeatherClient.BaseAddress = new Uri("http://api.openweathermap.org/geo/1.0/direct?");
-            httpClientHolder.OpenWeatherClient.DefaultRequestHeaders.Add(Constants.API_KEY_HEADER, Environment.GetEnvironmentVariable("ApiKeyHeader");
+            SetupHttpClients(httpClientHolder);
 
             await Task.Delay(-1);
         }
