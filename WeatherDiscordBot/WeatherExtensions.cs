@@ -7,7 +7,7 @@ namespace WeatherDiscordBot
     {
         public static async Task<GeocodingResponse> CallGeocodingAPI(this HttpClient httpClient, string city, string apiKey)
         {
-            string url = $"{Constants.GEOCODING_BASE_URL}q={city}&appid={apiKey}";
+            string url = GetGeocodingRequestUrl(city, apiKey);
             var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
             var trimmedResult = (await response.Content.ReadAsStringAsync())[1..^1];
             var geocodingResponse = JsonConvert.DeserializeObject<GeocodingResponse>(trimmedResult);
@@ -18,8 +18,7 @@ namespace WeatherDiscordBot
         public static async Task<OpenWeatherResponse> CallOpenWeatherAPI(this HttpClient httpClient, 
                                                                          GeocodingResponse geocodingResponse, string apiKey)
         {
-            string url = $"{Constants.OPENWEATHER_BASE_URL}lat={geocodingResponse.lat}&lon={geocodingResponse.lon}" +
-                $"&appid={apiKey}&units=metric";
+            string url = GetOpenWeatherRequestUrl(geocodingResponse, apiKey);
             var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
             var result = await response.Content.ReadAsStringAsync();
             var openWeatherResponse = JsonConvert.DeserializeObject<OpenWeatherResponse>(result);
@@ -27,5 +26,15 @@ namespace WeatherDiscordBot
             return await Task.FromResult(openWeatherResponse);
         }
 
+        private static string GetGeocodingRequestUrl(string city, string apiKey)
+        {
+            return $"{Constants.GEOCODING_BASE_URL}q={city}&appid={apiKey}";
+        }
+
+        private static string GetOpenWeatherRequestUrl(GeocodingResponse geocodingResponse, string apiKey)
+        {
+            return $"{Constants.OPENWEATHER_BASE_URL}lat={geocodingResponse.lat}&lon={geocodingResponse.lon}" +
+                $"&appid={apiKey}&units=metric";
+        }
     }
 }
