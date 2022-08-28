@@ -8,8 +8,9 @@ using WeatherDiscordBot.Models;
 namespace WeatherDiscordBot
 {
     public class Program
-    {
+    {   
         private DiscordSocketClient _discordClient;
+        private HttpClient _httpClient;
 
         public static Task Main(string[] args) => new Program().MainAsync();
 
@@ -19,10 +20,10 @@ namespace WeatherDiscordBot
             var token = Environment.GetEnvironmentVariable("TokenName");
             await InitDiscordClient(token);
 
-            var httpClientHolder = new HttpClientHolder();
-            SetupHttpClients(httpClientHolder);
+            _httpClient = new HttpClient();
 
             await Task.Delay(-1);
+            _httpClient.Dispose();
         }
 
         private void SetupDiscordClient()
@@ -96,26 +97,13 @@ namespace WeatherDiscordBot
         private async Task SlashCommandHandler(SocketSlashCommand slashCommand)
         {
             var handler = CommandHandlerFactory.GetCommandHandler(slashCommand.Data.Name);
-            await handler.Handle(slashCommand);
+            await handler.Handle(slashCommand, _httpClient);
         }
 
         private async Task InitDiscordClient(string? token)
         {
             await _discordClient.LoginAsync(TokenType.Bot, token);
             await _discordClient.StartAsync();
-        }
-
-        private void SetupHttpClients(HttpClientHolder httpClientHolder)
-        {
-            var apiKey = Environment.GetEnvironmentVariable("ApiKeyHeader");
-
-            httpClientHolder.OpenWeatherClient.BaseAddress = new Uri(Constants.OPENWEATHER_BASE_URL);
-            httpClientHolder.OpenWeatherClient.DefaultRequestHeaders
-                            .Add(Constants.API_KEY_HEADER, apiKey);
-
-            httpClientHolder.GeocodigClient.BaseAddress = new Uri(Constants.GEOCODING_BASE_URL);
-            httpClientHolder.GeocodigClient.DefaultRequestHeaders
-                            .Add(Constants.API_KEY_HEADER, apiKey);
         }
     }
 }
