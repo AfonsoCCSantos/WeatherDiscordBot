@@ -3,14 +3,14 @@
     public class GeocodingResponse
     {
         public string name { get; set; }
-        public Local_Names local_names { get; set; }
+        public TranslatedNames local_names { get; set; }
         public float lat { get; set; }
         public float lon { get; set; }
         public string country { get; set; }
         public string state { get; set; }
     }
 
-    public class Local_Names
+    public class TranslatedNames
     {
         public string el { get; set; }
         public string te { get; set; }

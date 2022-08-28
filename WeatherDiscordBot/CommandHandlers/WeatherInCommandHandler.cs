@@ -10,18 +10,23 @@ namespace WeatherDiscordBot.CommandHandlers
         {
             var city = command.Data.Options.First().Value.ToString();
 
-            string url = $"http://api.openweathermap.org/geo/1.0/direct?q={city}&appid={Environment.GetEnvironmentVariable("ApiKey")}";
+            string url = $"{Constants.GEOCODING_BASE_URL}q={city}&appid={Environment.GetEnvironmentVariable("ApiKey")}";
 
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-            var response = await httpClient.SendAsync(request);
-            var result = await response.Content.ReadAsStringAsync();
-            var trimmedResult = result.Substring(1, result.Length - 2);
+            var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
+            var trimmedResult = (await response.Content.ReadAsStringAsync())[1..^1];
 
-            var response2 = JsonConvert.DeserializeObject<GeocodingResponse>(trimmedResult);
+            var geocodingResponse = JsonConvert.DeserializeObject<GeocodingResponse>(trimmedResult);
 
-            await command.RespondAsync(response2.lon.ToString() + " " + response2.lat.ToString());
+            string openWeatherUrl = $"{Constants.OPENWEATHER_BASE_URL}lat={geocodingResponse.lat}&lon={geocodingResponse.lon}" +
+                $"&appid={Environment.GetEnvironmentVariable("ApiKey")}&units=metric";
 
-            request.Dispose();
+            var weatherResponse = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, openWeatherUrl));
+            var result = await weatherResponse.Content.ReadAsStringAsync();
+
+            var weatherResponse2 = JsonConvert.DeserializeObject<OpenWeatherResponse>(result);
+
+            await command.RespondAsync($"Temperature in {city} is {weatherResponse2.main.temp}");
+
             response.Dispose();
         }
     }
