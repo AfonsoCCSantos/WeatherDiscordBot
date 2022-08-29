@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using Discord.WebSocket;
+using Newtonsoft.Json;
 using WeatherDiscordBot.Models;
 
 namespace WeatherDiscordBot
 {
-    public static class WeatherExtensions
+    public static class HelperMethods
     {
         public static async Task<GeocodingResponse> CallGeocodingAPI(this HttpClient httpClient, string city, string apiKey)
         {
@@ -35,6 +36,26 @@ namespace WeatherDiscordBot
         {
             return $"{Constants.OPENWEATHER_BASE_URL}lat={geocodingResponse.lat}&lon={geocodingResponse.lon}" +
                 $"&appid={apiKey}&units=metric";
+        }
+
+        public static string GetFormattedCityName(SocketSlashCommand command)
+        {
+            var cityName = command.Data.Options.First().Value.ToString();
+            if (cityName is not null)
+            {
+                return FirstLetterCapitalCase(cityName.ToLower());
+            }
+            else
+            {
+                throw new ArgumentException("No city name was provided!");
+            }
+        }
+
+        private static string FirstLetterCapitalCase(string toFormat)
+        {
+            char firstLetter = toFormat[0];
+            string formattedString = toFormat.Substring(1).Insert(0, firstLetter.ToString().ToUpper());
+            return formattedString;
         }
     }
 }

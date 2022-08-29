@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using System.Text;
+using WeatherDiscordBot.CommandHandlers.WeatherIn;
 using WeatherDiscordBot.Models;
 
 namespace WeatherDiscordBot.CommandHandlers
@@ -8,43 +9,19 @@ namespace WeatherDiscordBot.CommandHandlers
     {
         public override async Task Handle(SocketSlashCommand command, HttpClient httpClient)
         {
-            var city = GetFormattedCityName(command);
-            var apiKey = Environment.GetEnvironmentVariable("ApiKey");
-
-            var geocodingResponse = await httpClient.CallGeocodingAPI(city, apiKey);
-            var openWeatherResponse = await httpClient.CallOpenWeatherAPI(geocodingResponse, apiKey);
-
-            await command.RespondAsync(GetFormattedWeatherResponse(openWeatherResponse, city));
+            IWeatherProvider weatherProvider = new OpenWeatherApiAdapter();
+            WeatherResponse weatherResponse = await weatherProvider.GetWeatherInformation(command, httpClient);
+            await command.RespondAsync(GetFormattedWeatherResponse(weatherResponse));
         }
         
-        private string GetFormattedWeatherResponse(OpenWeatherResponse openWeatherResponse, string city)
+        private string GetFormattedWeatherResponse(WeatherResponse weather)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Today's weather for {city}:");
-            sb.AppendLine($" Current Temperature: {openWeatherResponse.main.temp}");
-            sb.AppendLine($" Highest Temperature: {openWeatherResponse.main.temp_max}");
-            sb.AppendLine($" Lowest Temperature: {openWeatherResponse.main.temp_min}");
+            StringBuilder sb = new();
+            sb.AppendLine($"Today's weather for {weather.City}:");
+            sb.AppendLine($"   -Current Temperature: {(int) (weather.CurrentTemperature + 0.5)}");
+            sb.AppendLine($"   -Highest Temperature: {(int) (weather.MaxTemperature + 0.5)}");
+            sb.AppendLine($"   -Lowest Temperature: {(int) (weather.MinTemperature + 0.5)}");
             return sb.ToString();
-        }
-
-        private static string GetFormattedCityName(SocketSlashCommand command)
-        {
-            var cityName = command.Data.Options.First().Value.ToString();
-            if (cityName is not null)
-            {
-                return FirstLetterCapitalCase(cityName.ToLower());
-            }
-            else
-            {
-                throw new ArgumentException("No city name was provided!");
-            }
-        }
-
-        private static string FirstLetterCapitalCase(string toFormat)
-        {
-            char firstLetter = toFormat[0];
-            string formattedString = toFormat.Substring(1).Insert(0, firstLetter.ToString().ToUpper());
-            return formattedString;
         }
     }
 }
